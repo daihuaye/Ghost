@@ -1,18 +1,22 @@
 import Ember from 'ember';
-var AlertsComponent = Ember.Component.extend({
+
+const {
+    Component,
+    computed,
+    inject: {service},
+    observer
+} = Ember;
+const {alias} = computed;
+
+export default Component.extend({
     tagName: 'aside',
     classNames: 'gh-alerts',
 
-    messages: Ember.computed.filter('notifications', function (notification) {
-        var displayStatus = (typeof notification.toJSON === 'function') ?
-            notification.get('status') : notification.status;
+    notifications: service(),
 
-        return displayStatus === 'persistent';
-    }),
+    messages: alias('notifications.alerts'),
 
-    messageCountObserver: Ember.observer('messages.[]', function () {
+    messageCountObserver: observer('messages.[]', function () {
         this.sendAction('notify', this.get('messages').length);
     })
 });
-
-export default AlertsComponent;

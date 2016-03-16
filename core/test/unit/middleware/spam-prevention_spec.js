@@ -1,5 +1,4 @@
 /*globals describe, beforeEach, afterEach, it*/
-/*jshint expr:true*/
 var should      = require('should'),
     sinon       = require('sinon'),
     middleware  = require('../../../server/middleware').middleware;
@@ -43,7 +42,7 @@ describe('Middleware: spamPrevention', function () {
             req.body.grant_type = 'refresh_token';
             middleware.spamPrevention.signin(req, null, next);
 
-            next.calledOnce.should.be.true;
+            next.calledOnce.should.be.true();
             done();
         });
 
@@ -53,7 +52,7 @@ describe('Middleware: spamPrevention', function () {
             middleware.spamPrevention.signin(req, null, spyNext);
 
             should.exist(error);
-            error.should.be.a.BadRequestError;
+            error.errorType.should.eql('BadRequestError');
             done();
         });
 
@@ -64,7 +63,7 @@ describe('Middleware: spamPrevention', function () {
 
             middleware.spamPrevention.signin(req, null, spyNext);
             should.exist(error);
-            error.should.be.a.UnauthorizedError;
+            error.errorType.should.eql('TooManyRequestsError');
 
             done();
         });
@@ -80,7 +79,7 @@ describe('Middleware: spamPrevention', function () {
             }
 
             middleware.spamPrevention.signin(req, null, spyNext);
-            error.should.be.a.UnauthorizedError;
+            error.errorType.should.eql('TooManyRequestsError');
             error = null;
 
             // fast forward 1 hour
@@ -91,7 +90,7 @@ describe('Middleware: spamPrevention', function () {
 
             middleware.spamPrevention.signin(req, null, spyNext);
             should(error).equal(undefined);
-            spyNext.should.be.calledOnce;
+            spyNext.called.should.be.true();
 
             process.hrtime.restore();
             done();
@@ -118,7 +117,7 @@ describe('Middleware: spamPrevention', function () {
             };
 
             middleware.spamPrevention.forgotten(req, null, spyNext);
-            error.should.be.a.BadRequestError;
+            error.errorType.should.eql('BadRequestError');
 
             done();
         });
@@ -129,7 +128,7 @@ describe('Middleware: spamPrevention', function () {
             }
 
             middleware.spamPrevention.forgotten(req, null, spyNext);
-            error.should.be.a.UnauthorizedError;
+            error.errorType.should.eql('TooManyRequestsError');
 
             done();
         });
@@ -147,7 +146,7 @@ describe('Middleware: spamPrevention', function () {
             }
 
             middleware.spamPrevention.forgotten(req, null, spyNext);
-            error.should.be.a.UnauthorizedError;
+            error.errorType.should.eql('TooManyRequestsError');
 
             done();
         });
@@ -173,7 +172,7 @@ describe('Middleware: spamPrevention', function () {
 
             middleware.spamPrevention.protected(req, res, spyNext);
             res.error.message.should.equal('No password entered');
-            spyNext.should.be.calledOnce;
+            spyNext.calledOnce.should.be.true();
 
             done();
         });

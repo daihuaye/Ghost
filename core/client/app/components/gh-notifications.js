@@ -1,15 +1,17 @@
 import Ember from 'ember';
 
-export default Ember.Component.extend({
+const {
+    Component,
+    computed,
+    inject: {service}
+} = Ember;
+const {alias} = computed;
+
+export default Component.extend({
     tagName: 'aside',
     classNames: 'gh-notifications',
 
-    notifications: Ember.inject.service(),
+    notifications: service(),
 
-    messages: Ember.computed.filter('notifications.content', function (notification) {
-        var displayStatus = (typeof notification.toJSON === 'function') ?
-            notification.get('status') : notification.status;
-
-        return displayStatus === 'passive';
-    })
+    messages: alias('notifications.notifications')
 });

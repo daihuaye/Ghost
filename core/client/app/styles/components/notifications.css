@@ -63,6 +63,16 @@
     color: var(--red);
 }
 
+.gh-notification-passive {
+    animation: fade-out;
+    animation-delay: 5s;
+    animation-iteration-count: 1;
+}
+
+.gh-notification-passive:hover {
+    animation: fade-in;
+}
+
 /* Red notification
 /* ---------------------------------------------------------- */
 
@@ -118,13 +128,13 @@
     font-size: 1.4rem;
     line-height: 1.3em;
     font-weight: 200;
-    user-select: all;
+    user-select: text;
 }
 
 .gh-alert a {
     text-decoration: underline;
     font-weight: 400;
-    user-select: all;
+    user-select: text;
 }
 
 .gh-alert-close {

@@ -5,7 +5,7 @@
 // These classes relate to elements which only appear when a given tab is loaded.
 // These are used to check that a switch to a tab is complete, or that we are on the right tab.
 var generalTabDetector = '.gh-nav-settings-general.active',
-    usersTabDetector = '.gh-nav-main-users';
+    usersTabDetector = '.gh-nav-main-users.active';
 
 CasperTest.begin('Team tab is correct', 4, function suite(test) {
     // TODO make sure settings nav tests are refactored into app_test.js
@@ -14,14 +14,14 @@ CasperTest.begin('Team tab is correct', 4, function suite(test) {
         casper.thenClick('.gh-nav-main-users');
         casper.waitForSelector(usersTabDetector, function then() {
             // assert that the right menu item is active
-            test.assertExists('.gh-nav-main-users.active', 'Users link is active');
+            test.assert(true, 'Users link is active');
             test.assertDoesntExist('.gh-nav-settings-general.active', 'General link is not active');
         }, casper.failOnTimeout(test, 'waitForSelector `usersTabDetector` timed out'));
 
         casper.thenClick('.gh-nav-settings-general');
         casper.waitForSelector(generalTabDetector, function then() {
             // assert that the right menu item is active
-            test.assertExists('.gh-nav-settings-general.active', 'General link is active');
+            test.assert(true, 'General link is active');
             test.assertDoesntExist('.gh-nav-main-users.active', 'User link is not active');
         }, casper.failOnTimeout(test, 'waitForSelector `generalTabDetector` timed out'));
     });
@@ -34,17 +34,17 @@ CasperTest.begin('Users screen is correct', 9, function suite(test) {
         test.assertUrlMatch(/ghost\/team\/$/, 'team transitions to correct url');
     });
     casper.then(function usersScreenHasContent() {
-        test.assertSelectorHasText('.settings-users .user-list .user-list-title', 'Active users', 'active users text is correct');
-        test.assertExists('.settings-users .user-list .user-list-item', 'Has an active user');
-        test.assertSelectorHasText('.settings-users .user-list-item .name', 'Test User', 'test user text is correct');
-        test.assertExists('.settings-users .user-list-item .role-label.owner', 'First user has owner role displayed');
+        test.assertSelectorHasText('.team .user-list .user-list-title', 'Active users', 'active users text is correct');
+        test.assertExists('.team .user-list .user-list-item', 'Has an active user');
+        test.assertSelectorHasText('.team .user-list-item .name', 'Test User', 'test user text is correct');
+        test.assertExists('.team .user-list-item .role-label.owner', 'First user has owner role displayed');
 
         test.assertExists('.view-actions .btn-green', 'Add user button is on page.');
     });
     casper.thenClick('.view-actions .btn-green');
     casper.waitForOpaque('.invite-new-user .modal-content', function then() {
         test.assertEval(function testOwnerRoleNotAnOption() {
-            var options = document.querySelectorAll('.invite-new-user select#new-user-role option'),
+            var options = document.querySelectorAll('.invite-new-user #new-user-role select option'),
                 i = 0;
             for (; i < options.length; i = i + 1) {
                 if (options[i].text === 'Owner') {
@@ -54,10 +54,11 @@ CasperTest.begin('Users screen is correct', 9, function suite(test) {
             return true;
         }, '"Owner" is not a role option for new users');
     });
+
     // role options get loaded asynchronously; give them a chance to come in
-    casper.waitForSelector('.invite-new-user select#new-user-role option', function then() {
+    casper.waitForSelector('.invite-new-user #new-user-role select option', function then() {
         test.assertEval(function authorIsSelectedByDefault() {
-            var options = document.querySelectorAll('.invite-new-user select#new-user-role option'),
+            var options = document.querySelectorAll('.invite-new-user #new-user-role select option'),
                 i = 0;
             for (; i < options.length; i = i + 1) {
                 if (options[i].selected) {
@@ -68,8 +69,9 @@ CasperTest.begin('Users screen is correct', 9, function suite(test) {
         }, 'The "Author" role is selected by default when adding a new user');
     });
 });
+
 // ### User settings tests
-CasperTest.begin('Can save settings', 7, function suite(test) {
+CasperTest.begin('Can save settings', 5, function suite(test) {
     casper.thenOpenAndWaitForPageLoad('team.user', function testTitleAndUrl() {
         test.assertTitle('Team - User - Test Blog', 'Ghost Admin title is correct');
         test.assertUrlMatch(/ghost\/team\/test\/$/, 'team.user has correct URL');
@@ -94,21 +96,15 @@ CasperTest.begin('Can save settings', 7, function suite(test) {
     });
 
     casper.thenClick('.btn-blue');
-    casper.waitFor(function successNotification() {
-        return this.evaluate(function () {
-            return document.querySelectorAll('.gh-notification').length > 0;
-        });
+    casper.waitForResource(/\/users\/\d\/\?include=roles/, function onSuccess() {
+        test.assert(true, 'Saving the user pane triggered a save request');
     }, function doneWaiting() {
-        test.pass('Waited for notification');
-    }, casper.failOnTimeout(test, 'Saving the user pane did not result in a notification'));
+        test.fail('Saving the user pane did not trigger a save request');
+    });
 
     casper.then(function checkUserWasSaved() {
         casper.removeListener('resource.requested', handleUserRequest);
     });
-
-    casper.waitForSelector('.notification-success', function onSuccess() {
-        test.assert(true, 'Got success notification');
-    }, casper.failOnTimeout(test, 'No success notification :('));
 
     casper.thenClick('.gh-nav-settings-general').then(function testTransitionToGeneral() {
         casper.waitForSelector(generalTabDetector, function then() {
@@ -117,24 +113,19 @@ CasperTest.begin('Can save settings', 7, function suite(test) {
                     return document.querySelector('.gh-nav-settings-general').classList.contains('active');
                 }, 'general tab is marked active');
             },
-            casper.failOnTimeout(test, 'waitForSelector `usersTabDetector` timed out'));
+            casper.failOnTimeout(test, 'waitForSelector `generalTabDetector` timed out'));
     });
 
-    casper.thenClick('.btn-blue').waitFor(function successNotification() {
-        return this.evaluate(function () {
-            return document.querySelectorAll('.gh-notification').length > 0;
-        });
+    casper.thenClick('.btn-blue');
+    casper.waitForResource(/\/users\/\d\/\?include=roles/, function onSuccess() {
+        test.assert(true, 'Saving the user pane triggered a save request');
     }, function doneWaiting() {
-        test.pass('Waited for notification');
-    }, casper.failOnTimeout(test, 'Saving the general pane did not result in a notification'));
+        test.fail('Saving the user pane did not trigger a save request');
+    });
 
     casper.then(function checkSettingsWereSaved() {
         casper.removeListener('resource.requested', handleSettingsRequest);
     });
-
-    casper.waitForSelector('.notification-success', function onSuccess() {
-        test.assert(true, 'Got success notification');
-    }, casper.failOnTimeout(test, 'No success notification :('));
 
     CasperTest.beforeDone(function () {
         casper.removeListener('resource.requested', handleUserRequest);
@@ -201,7 +192,7 @@ CasperTest.begin('User settings screen change slug handles duplicate slug', 4, f
     });
 });
 
-CasperTest.begin('User settings screen validates email', 6, function suite(test) {
+CasperTest.begin('User settings screen validates email', 4, function suite(test) {
     var email;
 
     casper.thenOpenAndWaitForPageLoad('team.user', function testTitleAndUrl() {
@@ -217,20 +208,14 @@ CasperTest.begin('User settings screen validates email', 6, function suite(test)
 
     casper.then(function setEmailToInvalid() {
         var brokenEmail = email.replace('.', '-');
-
-        casper.fillSelectors('.user-profile', {
-            '#user-email': brokenEmail
-        }, false);
+        this.fillAndSave('.user-profile', {
+            email: brokenEmail
+        });
     });
 
-    casper.thenClick('.btn-blue');
-
-    casper.waitForResource('/team/');
-
-    casper.waitForSelector('.notification-error', function onSuccess() {
-        test.assert(true, 'Got error notification');
-        test.assertSelectorDoesntHaveText('.notification-error', '[object Object]', 'notification text is not broken');
-    }, casper.failOnTimeout(test, 'No error notification :('));
+    casper.waitForText('Please supply a valid email address', function onSuccess() {
+        test.assert(true, 'Invalid email error was shown');
+    }, casper.failOnTimeout(test, 'Invalid email error was not shown'));
 
     casper.then(function resetEmailToValid() {
         casper.fillSelectors('.user-profile', {
@@ -238,14 +223,13 @@ CasperTest.begin('User settings screen validates email', 6, function suite(test)
         }, false);
     });
 
+    casper.then(function checkEmailErrorWasCleared() {
+        test.assertTextDoesntExist('Please supply a valid email address', 'Invalid email error was not cleared');
+    });
+
     casper.thenClick('.view-actions .btn-blue');
 
     casper.waitForResource(/users/);
-
-    casper.waitForSelector('.notification-success', function onSuccess() {
-        test.assert(true, 'Got success notification');
-        test.assertSelectorDoesntHaveText('.notification-success', '[object Object]', 'notification text is not broken');
-    }, casper.failOnTimeout(test, 'No success notification :('));
 });
 
 // TODO: user needs to be loaded whenever it is edited (multi user)
@@ -288,9 +272,9 @@ CasperTest.begin('Ensure user bio field length validation', 3, function suite(te
 
     casper.thenClick('.view-actions .btn-blue');
 
-    casper.waitForSelectorTextChange('.notification-error', function onSuccess() {
-        test.assertSelectorHasText('.notification-error', 'is too long', '.notification-error text is correct');
-    }, casper.failOnTimeout(test, 'Bio field length error did not appear', 2000));
+    casper.waitForText('Bio is too long', function onSuccess() {
+        test.assert(true, 'Bio too long error was shown');
+    }, casper.failOnTimeout(test, 'Bio too long error was not shown'));
 });
 
 CasperTest.begin('Ensure user url field validation', 3, function suite(test) {
@@ -307,9 +291,9 @@ CasperTest.begin('Ensure user url field validation', 3, function suite(test) {
 
     casper.thenClick('.view-actions .btn-blue');
 
-    casper.waitForSelectorTextChange('.notification-error', function onSuccess() {
-        test.assertSelectorHasText('.notification-error', 'not a valid url', '.notification-error text is correct');
-    }, casper.failOnTimeout(test, 'Url validation error did not appear', 2000));
+    casper.waitForText('Website is not a valid url', function onSuccess() {
+        test.assert(true, 'Website invalid error was shown');
+    }, casper.failOnTimeout(test, 'Website invalid error was not shown'));
 });
 
 CasperTest.begin('Ensure user location field length validation', 3, function suite(test) {
@@ -326,7 +310,7 @@ CasperTest.begin('Ensure user location field length validation', 3, function sui
 
     casper.thenClick('.view-actions .btn-blue');
 
-    casper.waitForSelectorTextChange('.notification-error', function onSuccess() {
-        test.assertSelectorHasText('.notification-error', 'is too long', '.notification-error text is correct');
-    }, casper.failOnTimeout(test, 'Location field length error did not appear', 2000));
+    casper.waitForText('Location is too long', function onSuccess() {
+        test.assert(true, 'Location too long error was shown');
+    }, casper.failOnTimeout(test, 'Location too long error was not shown'));
 });

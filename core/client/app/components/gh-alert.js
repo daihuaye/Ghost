@@ -1,38 +1,39 @@
 import Ember from 'ember';
 
-export default Ember.Component.extend({
+const {
+    Component,
+    computed,
+    inject: {service}
+} = Ember;
+
+export default Component.extend({
     tagName: 'article',
-    classNames: ['gh-alert', 'gh-alert-blue'],
+    classNames: ['gh-alert'],
     classNameBindings: ['typeClass'],
 
-    notifications: Ember.inject.service(),
+    notifications: service(),
 
-    typeClass: Ember.computed(function () {
-        var classes = '',
-            message = this.get('message'),
-            type,
-            dismissible;
+    typeClass: computed('message.type', function () {
+        let type = this.get('message.type');
+        let classes = '';
+        let typeMapping;
 
-        // Check to see if we're working with a DS.Model or a plain JS object
-        if (typeof message.toJSON === 'function') {
-            type = message.get('type');
-            dismissible = message.get('dismissible');
-        } else {
-            type = message.type;
-            dismissible = message.dismissible;
-        }
+        typeMapping = {
+            success: 'green',
+            error: 'red',
+            warn: 'yellow',
+            info: 'blue'
+        };
 
-        classes += 'notification-' + type;
-
-        if (type === 'success' && dismissible !== false) {
-            classes += ' notification-passive';
+        if (typeMapping[type] !== undefined) {
+            classes += `gh-alert-${typeMapping[type]}`;
         }
 
         return classes;
     }),
 
     actions: {
-        closeNotification: function () {
+        closeNotification() {
             this.get('notifications').closeNotification(this.get('message'));
         }
     }

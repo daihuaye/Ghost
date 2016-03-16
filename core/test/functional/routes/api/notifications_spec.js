@@ -1,8 +1,7 @@
 /*global describe, it, before, after */
-/*jshint expr:true*/
 var testUtils     = require('../../../utils'),
     supertest     = require('supertest'),
-
+    should        = require('should'),
     ghost         = require('../../../../../core'),
 
     request;
@@ -40,7 +39,7 @@ describe('Notifications API', function () {
                 .set('Authorization', 'Bearer ' + accesstoken)
                 .send({notifications: [newNotification]})
                 .expect('Content-Type', /json/)
-                .expect('Cache-Control', testUtils.cacheRules['private'])
+                .expect('Cache-Control', testUtils.cacheRules.private)
                 .expect(201)
                 .end(function (err, res) {
                     if (err) {
@@ -49,13 +48,13 @@ describe('Notifications API', function () {
 
                     var jsonResponse = res.body;
 
-                    jsonResponse.notifications.should.exist;
+                    should.exist(jsonResponse.notifications);
 
                     testUtils.API.checkResponse(jsonResponse.notifications[0], 'notification');
 
                     jsonResponse.notifications[0].type.should.equal(newNotification.type);
                     jsonResponse.notifications[0].message.should.equal(newNotification.message);
-                    jsonResponse.notifications[0].status.should.equal('persistent');
+                    jsonResponse.notifications[0].status.should.equal('alert');
 
                     done();
                 });
@@ -66,7 +65,7 @@ describe('Notifications API', function () {
         var newNotification = {
             type: 'info',
             message: 'test notification',
-            status: 'persistent'
+            status: 'alert'
         };
 
         it('deletes a notification', function (done) {
@@ -75,7 +74,7 @@ describe('Notifications API', function () {
                 .set('Authorization', 'Bearer ' + accesstoken)
                 .send({notifications: [newNotification]})
                 .expect('Content-Type', /json/)
-                .expect('Cache-Control', testUtils.cacheRules['private'])
+                .expect('Cache-Control', testUtils.cacheRules.private)
                 .expect(201)
                 .end(function (err, res) {
                     if (err) {
@@ -85,7 +84,7 @@ describe('Notifications API', function () {
                     var location = res.headers.location,
                         jsonResponse = res.body;
 
-                    jsonResponse.notifications.should.exist;
+                    should.exist(jsonResponse.notifications);
                     testUtils.API.checkResponse(jsonResponse.notifications[0], 'notification');
 
                     jsonResponse.notifications[0].type.should.equal(newNotification.type);
@@ -105,7 +104,7 @@ describe('Notifications API', function () {
                             // a delete returns a JSON object containing the notification
                             // we just deleted.
                             var deleteResponse = res.body;
-                            deleteResponse.notifications.should.exist;
+                            should.exist(deleteResponse.notifications);
                             deleteResponse.notifications[0].type.should.equal(newNotification.type);
                             deleteResponse.notifications[0].message.should.equal(newNotification.message);
                             deleteResponse.notifications[0].status.should.equal(newNotification.status);

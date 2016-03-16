@@ -30,7 +30,7 @@ config = {
     // ### Development **(default)**
     development: {
         // The url to use when providing links to the site, E.g. in RSS and email.
-        // Change this to your Ghost blogs published URL.
+        // Change this to your Ghost blog's published URL.
         url: 'http://localhost:2368',
 
         // Example mail config
@@ -83,6 +83,14 @@ config = {
             client: 'sqlite3',
             connection: {
                 filename: path.join(__dirname, '/content/data/ghost-test.db')
+            },
+            pool: {
+                afterCreate: function (conn, done) {
+                    conn.run('PRAGMA synchronous=OFF;' +
+                    'PRAGMA journal_mode=MEMORY;' +
+                    'PRAGMA locking_mode=EXCLUSIVE;' +
+                    'BEGIN EXCLUSIVE; COMMIT;', done);
+                }
             }
         },
         server: {

@@ -15,12 +15,13 @@ var _              = require('lodash'),
     roles          = require('./roles'),
     settings       = require('./settings'),
     tags           = require('./tags'),
+    clients        = require('./clients'),
     themes         = require('./themes'),
     users          = require('./users'),
     slugs          = require('./slugs'),
     authentication = require('./authentication'),
     uploads        = require('./upload'),
-    dataExport     = require('../data/export'),
+    exporter       = require('../data/export'),
 
     http,
     addHeaders,
@@ -137,7 +138,7 @@ locationHeader = function locationHeader(req, result) {
  * @return {string}
  */
 contentDispositionHeader = function contentDispositionHeader() {
-    return dataExport.fileName().then(function then(filename) {
+    return exporter.fileName().then(function then(filename) {
         return 'Attachment; filename="' + filename + '"';
     });
 };
@@ -233,6 +234,7 @@ module.exports = {
     roles: roles,
     settings: settings,
     tags: tags,
+    clients: clients,
     themes: themes,
     users: users,
     slugs: slugs,
